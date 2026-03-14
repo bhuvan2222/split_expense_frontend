@@ -9,6 +9,7 @@ export type GroupsStackParamList = {
   CreateGroup: undefined;
   GroupDetail: { groupId: string };
   InviteMembers: { groupId: string };
+  EditGroup: { groupId: string };
 };
 
 export type ExpensesStackParamList = {

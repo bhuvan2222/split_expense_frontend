@@ -44,7 +44,15 @@ export const GroupDetailScreen = () => {
       {group.description ? <Text style={styles.subtitle}>{group.description}</Text> : null}
 
       <View style={styles.actions}>
-        <Button mode="contained" onPress={() => navigation.navigate('AddExpense', { groupId })}>Add expense</Button>
+        <Button
+          mode="contained"
+          onPress={() => navigation.navigate('Expenses', { screen: 'AddExpense', params: { groupId } })}
+        >
+          Add expense
+        </Button>
+        <Button mode="outlined" onPress={() => navigation.navigate('EditGroup', { groupId })}>
+          Edit
+        </Button>
         <Button mode="outlined" onPress={() => navigation.navigate('InviteMembers', { groupId })}>Invite</Button>
       </View>
       <View style={styles.actions}>

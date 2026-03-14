@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { clearCredentials, setCredentials } from '../store/authSlice';
 import { clearAuthSession, loadAuthSession, saveAuthSession } from '../utils/authStorage';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();
@@ -53,6 +54,12 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
+    try {
+      await GoogleSignin.signOut();
+      await GoogleSignin.revokeAccess();
+    } catch {
+      // Ignore if Google sign-in wasn't used or not available.
+    }
     await clearAuthSession();
     dispatch(clearCredentials());
   };

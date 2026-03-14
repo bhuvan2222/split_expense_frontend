@@ -16,6 +16,7 @@ import { GroupsListScreen } from '../screens/Groups/GroupsListScreen';
 import { CreateGroupScreen } from '../screens/Groups/CreateGroupScreen';
 import { GroupDetailScreen } from '../screens/Groups/GroupDetailScreen';
 import { InviteMembersScreen } from '../screens/Groups/InviteMembersScreen';
+import { EditGroupScreen } from '../screens/Groups/EditGroupScreen';
 import { ExpenseHistoryScreen } from '../screens/Expenses/ExpenseHistoryScreen';
 import { AddExpenseScreen } from '../screens/Expenses/AddExpenseScreen';
 import { ExpenseDetailScreen } from '../screens/Expenses/ExpenseDetailScreen';
@@ -42,6 +43,7 @@ const GroupsStackNavigator = () => (
     <GroupsStack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ title: 'New group' }} />
     <GroupsStack.Screen name="GroupDetail" component={GroupDetailScreen} options={{ title: 'Group' }} />
     <GroupsStack.Screen name="InviteMembers" component={InviteMembersScreen} options={{ title: 'Invite members' }} />
+    <GroupsStack.Screen name="EditGroup" component={EditGroupScreen} options={{ title: 'Edit group' }} />
   </GroupsStack.Navigator>
 );
 
