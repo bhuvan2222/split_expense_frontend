@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { FlatList, View } from 'react-native';
-import { FAB, TextInput, Button } from 'react-native-paper';
+import { FlatList, View, StyleSheet } from 'react-native';
+import { FAB, TextInput, Button, Card, Text, Avatar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../../components/common/Screen';
 import { GroupCard } from '../../components/group/GroupCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { useJoinByInviteMutation, useListGroupsQuery } from '../../api/groupsApi';
+import { COLORS } from '../../constants/colors';
 
 export const GroupsListScreen = () => {
   const navigation = useNavigation<any>();
@@ -16,26 +17,44 @@ export const GroupsListScreen = () => {
 
   return (
     <Screen>
-      <View style={{ marginBottom: 12 }}>
-        <TextInput
-          mode="outlined"
-          label="Join with invite code"
-          value={inviteCode}
-          onChangeText={setInviteCode}
-        />
-        <Button
-          mode="outlined"
-          onPress={async () => {
-            if (!inviteCode.trim()) return;
-            await joinByInvite({ inviteCode }).unwrap();
-            setInviteCode('');
-          }}
-          loading={joining}
-          style={{ marginTop: 8 }}
-        >
-          Join group
-        </Button>
+      <View style={styles.header}>
+        <Text variant="headlineMedium" style={styles.title}>Your Groups</Text>
+        <Text variant="bodyMedium" style={styles.subtitle}>Manage your shared expenses</Text>
       </View>
+
+      <Card style={styles.joinCard} mode="elevated" elevation={2}>
+        <Card.Content>
+          <View style={styles.joinHeader}>
+            <Avatar.Icon size={32} icon="link-variant" style={styles.joinIcon} color={COLORS.primary} />
+            <Text style={styles.joinTitle}>Have an invite code?</Text>
+          </View>
+          <View style={styles.joinRow}>
+            <TextInput
+              mode="outlined"
+              label="Enter code"
+              value={inviteCode}
+              onChangeText={setInviteCode}
+              style={styles.input}
+              outlineColor="transparent"
+              activeOutlineColor={COLORS.primary}
+              dense
+            />
+            <Button
+              mode="contained"
+              onPress={async () => {
+                if (!inviteCode.trim()) return;
+                await joinByInvite({ inviteCode }).unwrap();
+                setInviteCode('');
+              }}
+              loading={joining}
+              style={styles.joinButton}
+              labelStyle={styles.joinButtonText}
+            >
+              Join
+            </Button>
+          </View>
+        </Card.Content>
+      </Card>
 
       {isLoading ? (
         <LoadingSpinner />
@@ -45,15 +64,54 @@ export const GroupsListScreen = () => {
         <FlatList
           data={groups}
           keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <GroupCard group={item} onPress={() => navigation.navigate('GroupDetail', { groupId: item.id })} />
           )}
         />
       )}
 
-      <View style={{ position: 'absolute', right: 20, bottom: 20 }}>
-        <FAB icon="plus" onPress={() => navigation.navigate('CreateGroup')} />
-      </View>
+      <FAB 
+        icon="plus" 
+        style={styles.fab}
+        color="#ffffff"
+        onPress={() => navigation.navigate('CreateGroup')} 
+      />
     </Screen>
   );
 };
+
+const styles = StyleSheet.create({
+  header: { marginBottom: 20 },
+  title: { color: COLORS.text, fontWeight: 'bold' },
+  subtitle: { color: COLORS.muted, marginTop: 4 },
+  
+  joinCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    marginBottom: 20,
+  },
+  joinHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  joinIcon: { backgroundColor: COLORS.primary + '1A', marginRight: 8 },
+  joinTitle: { fontWeight: '600', color: COLORS.text, fontSize: 16 },
+  
+  joinRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  input: { flex: 1, backgroundColor: '#f8f9fa' },
+  joinButton: { borderRadius: 8, justifyContent: 'center' },
+  joinButtonText: { fontWeight: 'bold' },
+
+  listContainer: { paddingBottom: 80 },
+  
+  fab: { 
+    position: 'absolute', 
+    right: 20, 
+    bottom: 20,
+    backgroundColor: COLORS.primary,
+    borderRadius: 16,
+  }
+});

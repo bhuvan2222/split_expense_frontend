@@ -13,6 +13,7 @@ export const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; password?: string }>({});
 
   const [login, loginState] = useLoginMutation();
   const [register, registerState] = useRegisterMutation();
@@ -28,6 +29,7 @@ export const LoginScreen = () => {
 
   const handleSubmit = async () => {
     setError('');
+    setFieldErrors({});
     try {
       if (mode === 'register') {
         const result = await register({ name, email, password }).unwrap();
@@ -45,7 +47,26 @@ export const LoginScreen = () => {
         });
       }
     } catch (err: any) {
-      const message = err?.data?.error?.message || 'Authentication failed';
+      const fields = err?.data?.error?.fields;
+      if (Array.isArray(fields) && fields.length > 0) {
+        const next: { name?: string; email?: string; password?: string } = {};
+        fields.forEach((f: { field?: string; message?: string }) => {
+          if (!f?.field || !f?.message) return;
+          if (f.field === 'name') next.name = f.message;
+          if (f.field === 'email') next.email = f.message;
+          if (f.field === 'password') next.password = f.message;
+        });
+        setFieldErrors(next);
+        setError('');
+        return;
+      }
+      const code = err?.data?.error?.code;
+      let message = err?.data?.error?.message || 'Authentication failed';
+      if (code === 'USER_NOT_FOUND') {
+        message = 'User not found. Sign up to continue.';
+      } else if (code === 'INVALID_PASSWORD') {
+        message = 'Incorrect password. Try again.';
+      }
       setError(message);
     }
   };
@@ -109,6 +130,7 @@ export const LoginScreen = () => {
           style={styles.input}
         />
       ) : null}
+      {mode === 'register' && fieldErrors.name ? <HelperText type="error">{fieldErrors.name}</HelperText> : null}
       <TextInput
         mode="outlined"
         label="Email"
@@ -118,6 +140,7 @@ export const LoginScreen = () => {
         keyboardType="email-address"
         style={styles.input}
       />
+      {fieldErrors.email ? <HelperText type="error">{fieldErrors.email}</HelperText> : null}
       <TextInput
         mode="outlined"
         label="Password"
@@ -126,6 +149,7 @@ export const LoginScreen = () => {
         secureTextEntry
         style={styles.input}
       />
+      {fieldErrors.password ? <HelperText type="error">{fieldErrors.password}</HelperText> : null}
 
       {error ? <HelperText type="error">{error}</HelperText> : null}
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Button, Card, Text, TextInput } from 'react-native-paper';
+import { StyleSheet, View, ScrollView } from 'react-native';
+import { Button, Card, Text, TextInput, Avatar, Chip } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../../components/common/Screen';
 import { useListGroupsQuery, useListMembersQuery } from '../../api/groupsApi';
@@ -49,94 +49,186 @@ export const SettlementsScreen = () => {
 
   return (
     <Screen scroll>
-      <Text variant="headlineSmall" style={styles.title}>Settlements</Text>
-
-      <Text style={styles.label}>Group</Text>
-      <View style={styles.choiceRow}>
-        {groups.map((group) => (
-          <Button
-            key={group.id}
-            mode={group.id === groupId ? 'contained' : 'outlined'}
-            onPress={() => setGroupId(group.id)}
-            style={styles.choiceButton}
-          >
-            {group.name}
-          </Button>
-        ))}
+      <View style={styles.header}>
+        <Text variant="headlineMedium" style={styles.title}>Settle Up</Text>
+        <Text variant="bodyMedium" style={styles.subtitle}>Clear your balances</Text>
       </View>
 
-      <Text style={styles.label}>From</Text>
-      <View style={styles.choiceRow}>
-        {members.map((member) => (
-          <Button
-            key={member.id}
-            mode={member.user.id === fromUserId ? 'contained' : 'outlined'}
-            onPress={() => setFromUserId(member.user.id)}
-            style={styles.choiceButton}
-          >
-            {member.user.name}
-          </Button>
-        ))}
-      </View>
+      <Card style={styles.formCard} mode="elevated" elevation={1}>
+        <Card.Content>
+          <Text style={styles.label}>Select Group</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+            {groups.map((group) => (
+              <Chip
+                key={group.id}
+                selected={group.id === groupId}
+                onPress={() => setGroupId(group.id)}
+                style={[styles.chip, group.id === groupId && styles.chipSelected]}
+                textStyle={group.id === groupId ? styles.chipTextSelected : styles.chipText}
+              >
+                {group.name}
+              </Chip>
+            ))}
+          </ScrollView>
 
-      <Text style={styles.label}>To</Text>
-      <View style={styles.choiceRow}>
-        {members.map((member) => (
-          <Button
-            key={member.id}
-            mode={member.user.id === toUserId ? 'contained' : 'outlined'}
-            onPress={() => setToUserId(member.user.id)}
-            style={styles.choiceButton}
-          >
-            {member.user.name}
-          </Button>
-        ))}
-      </View>
+          <View style={styles.row}>
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>Who is paying?</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+                {members.map((member) => (
+                  <Chip
+                    key={`from-${member.id}`}
+                    selected={member.user.id === fromUserId}
+                    onPress={() => setFromUserId(member.user.id)}
+                    style={[styles.chip, member.user.id === fromUserId && styles.chipSelected]}
+                    textStyle={member.user.id === fromUserId ? styles.chipTextSelected : styles.chipText}
+                  >
+                    {member.user.name}
+                  </Chip>
+                ))}
+              </ScrollView>
+            </View>
 
-      <TextInput
-        mode="outlined"
-        label="Amount"
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="numeric"
-        style={styles.input}
-      />
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>To whom?</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+                {members.map((member) => (
+                  <Chip
+                    key={`to-${member.id}`}
+                    selected={member.user.id === toUserId}
+                    onPress={() => setToUserId(member.user.id)}
+                    style={[styles.chip, member.user.id === toUserId && styles.chipSelected]}
+                    textStyle={member.user.id === toUserId ? styles.chipTextSelected : styles.chipText}
+                  >
+                    {member.user.name}
+                  </Chip>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
 
-      <View style={styles.actions}>
-        <Button mode="contained" onPress={handleCreate} loading={creating} disabled={!amount}>
-          Mark as settled
-        </Button>
-        <Button mode="outlined" onPress={handleUpi} loading={initiating} disabled={!amount}>
-          Pay via UPI
-        </Button>
-      </View>
+          <TextInput
+            mode="outlined"
+            label="Amount to settle"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+            style={styles.input}
+            left={<TextInput.Affix text="₹ " />}
+            activeOutlineColor={COLORS.primary}
+          />
 
-      <Text variant="titleMedium" style={styles.section}>History</Text>
+          <View style={styles.actions}>
+            <Button 
+              mode="contained" 
+              onPress={handleCreate} 
+              loading={creating} 
+              disabled={!amount}
+              style={styles.actionButton}
+            >
+              Cash Settlement
+            </Button>
+            <Button 
+              mode="contained-tonal" 
+              icon="cellphone-nfc"
+              onPress={handleUpi} 
+              loading={initiating} 
+              disabled={!amount}
+              style={styles.actionButton}
+              buttonColor={COLORS.primary + '1A'}
+            >
+              Pay via UPI
+            </Button>
+          </View>
+        </Card.Content>
+      </Card>
+
+      <Text variant="titleMedium" style={styles.sectionTitle}>Recent Settlements</Text>
+      
       {settlements.map((item) => (
-        <Card key={item.id} style={styles.card}>
+        <Card key={item.id} style={styles.historyCard} mode="contained">
           <Card.Content>
-            <Text>{item.fromUser?.name ?? item.fromUserId} → {item.toUser?.name ?? item.toUserId}</Text>
-            <Text style={styles.muted}>{item.currency} {Number(item.amount).toFixed(2)} • {item.status}</Text>
-            {item.status !== 'COMPLETED' ? (
-              <Button mode="text" onPress={() => updateStatus({ id: item.id, status: 'COMPLETED' })}>
-                Mark completed
-              </Button>
-            ) : null}
+            <View style={styles.historyHeader}>
+              <View style={styles.usersRow}>
+                <Avatar.Text size={32} label={(item.fromUser?.name || item.fromUserId).substring(0,2).toUpperCase()} style={styles.avatar} />
+                <Avatar.Icon size={24} icon="arrow-right" style={styles.arrowIcon} color={COLORS.muted} />
+                <Avatar.Text size={32} label={(item.toUser?.name || item.toUserId).substring(0,2).toUpperCase()} style={styles.avatar} />
+              </View>
+              <View style={[styles.statusBadge, item.status === 'COMPLETED' ? styles.statusCompleted : styles.statusPending]}>
+                <Text style={[styles.statusText, item.status === 'COMPLETED' ? styles.statusTextCompleted : styles.statusTextPending]}>
+                  {item.status}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.historyFooter}>
+              <Text style={styles.historyAmount}>{item.currency ?? '₹'} {Number(item.amount).toFixed(2)}</Text>
+              {item.status !== 'COMPLETED' && (
+                <Button 
+                  mode="text" 
+                  compact 
+                  onPress={() => updateStatus({ id: item.id, status: 'COMPLETED' })}
+                  labelStyle={styles.markCompleteText}
+                >
+                  Mark completed
+                </Button>
+              )}
+            </View>
           </Card.Content>
         </Card>
       ))}
+      
+      {settlements.length === 0 && (
+        <Text style={styles.emptyText}>No settlements recorded yet.</Text>
+      )}
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  title: { color: COLORS.primary, marginBottom: 12 },
-  label: { marginTop: 12, marginBottom: 6, color: COLORS.text },
-  input: { marginVertical: 12 },
-  actions: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  section: { marginVertical: 12 },
-  card: { marginBottom: 10, backgroundColor: '#ffffff' },
-  muted: { color: COLORS.muted },
-  choiceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  choiceButton: { marginBottom: 6 }
+  header: { marginBottom: 20 },
+  title: { color: COLORS.text, fontWeight: 'bold' },
+  subtitle: { color: COLORS.muted, marginTop: 4 },
+
+  formCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    marginBottom: 24,
+  },
+  label: { marginTop: 8, marginBottom: 8, color: COLORS.text, fontWeight: '600', fontSize: 13 },
+  
+  chipScroll: { flexDirection: 'row', marginBottom: 8 },
+  chip: { marginRight: 8, backgroundColor: '#f1f3f5', borderRadius: 20 },
+  chipSelected: { backgroundColor: COLORS.primary },
+  chipText: { color: COLORS.text },
+  chipTextSelected: { color: '#ffffff', fontWeight: 'bold' },
+  
+  row: { gap: 16, marginTop: 8 },
+  halfWidth: { width: '100%' }, // Depending on preference, this could be flexDirection row if you want them side by side
+
+  input: { marginVertical: 16, backgroundColor: '#ffffff' },
+  
+  actions: { flexDirection: 'column', gap: 12 },
+  actionButton: { borderRadius: 8, paddingVertical: 4 },
+
+  sectionTitle: { fontWeight: '600', color: COLORS.text, marginBottom: 12 },
+  
+  historyCard: { marginBottom: 12, backgroundColor: '#f8f9fa', borderRadius: 12 },
+  historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  usersRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  avatar: { backgroundColor: COLORS.primary + '33' },
+  arrowIcon: { backgroundColor: 'transparent' },
+  
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  statusPending: { backgroundColor: '#fff3cd' },
+  statusCompleted: { backgroundColor: '#d1e7dd' },
+  statusText: { fontSize: 10, fontWeight: 'bold' },
+  statusTextPending: { color: '#856404' },
+  statusTextCompleted: { color: '#0f5132' },
+  
+  historyFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  historyAmount: { fontSize: 18, fontWeight: 'bold', color: COLORS.text },
+  markCompleteText: { color: COLORS.primary, fontWeight: '600' },
+
+  emptyText: { textAlign: 'center', color: COLORS.muted, marginTop: 20 },
 });
