@@ -14,8 +14,10 @@ export type SafeUser = {
 export type TokenPair = { accessToken: string; refreshToken: string };
 
 export type AuthResponse = { user: SafeUser; tokens: TokenPair };
+export type PhoneOtpResponse = { pinId: string };
 
 export const authApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     register: builder.mutation<AuthResponse, { name: string; email: string; password: string }>({
       query: (body) => ({ url: '/auth/register', method: 'POST', body }),
@@ -40,6 +42,14 @@ export const authApi = baseApi.injectEndpoints({
     googleMobile: builder.mutation<AuthResponse, { idToken?: string | null; accessToken?: string | null }>({
       query: (body) => ({ url: '/auth/google/mobile', method: 'POST', body }),
       transformResponse: (response: ApiResponse<AuthResponse>) => response.data
+    }),
+    requestPhoneOtp: builder.mutation<PhoneOtpResponse, { phoneNumber: string }>({
+      query: (body) => ({ url: '/auth/phone/request', method: 'POST', body }),
+      transformResponse: (response: ApiResponse<PhoneOtpResponse>) => response.data
+    }),
+    verifyPhoneOtp: builder.mutation<AuthResponse, { phoneNumber: string; pinId: string; pin: string }>({
+      query: (body) => ({ url: '/auth/phone/verify', method: 'POST', body }),
+      transformResponse: (response: ApiResponse<AuthResponse>) => response.data
     })
   })
 });
@@ -50,5 +60,7 @@ export const {
   useMeQuery,
   useRefreshMutation,
   useLogoutMutation,
-  useGoogleMobileMutation
+  useGoogleMobileMutation,
+  useRequestPhoneOtpMutation,
+  useVerifyPhoneOtpMutation
 } = authApi;

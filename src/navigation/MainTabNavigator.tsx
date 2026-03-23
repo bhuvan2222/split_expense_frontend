@@ -1,6 +1,8 @@
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import type {
   MainTabParamList,
@@ -30,6 +32,7 @@ import { ProfileScreen } from '../screens/Settings/ProfileScreen';
 import { PremiumScreen } from '../screens/Settings/PremiumScreen';
 import { LanguageScreen } from '../screens/Settings/LanguageScreen';
 import { NotificationsScreen } from '../screens/Settings/NotificationsScreen';
+import { COLORS } from '../constants/colors';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const GroupsStack = createNativeStackNavigator<GroupsStackParamList>();
@@ -76,7 +79,32 @@ const SettingsStackNavigator = () => (
 );
 
 export const MainTabNavigator = () => (
-  <Tab.Navigator>
+  <Tab.Navigator
+    screenOptions={({ route }) => ({
+      tabBarShowLabel: true,
+      tabBarActiveTintColor: COLORS.primary,
+      tabBarInactiveTintColor: '#94a3b8',
+      tabBarLabelStyle: styles.tabLabel,
+      tabBarStyle: styles.tabBar,
+      headerShown: route.name === 'Home' || route.name === 'Reports',
+      tabBarIcon: ({ focused, color }) => {
+        const iconMap: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
+          Home: 'home-variant',
+          Groups: 'account-group',
+          Expenses: 'receipt',
+          Settlements: 'handshake',
+          Reports: 'chart-pie',
+          Settings: 'cog'
+        };
+        const name = iconMap[route.name] ?? 'circle';
+        return (
+          <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+            <MaterialCommunityIcons name={name} size={22} color={focused ? COLORS.primary : color} />
+          </View>
+        );
+      }
+    })}
+  >
     <Tab.Screen name="Home" component={HomeScreen} />
     <Tab.Screen name="Groups" component={GroupsStackNavigator} options={{ headerShown: false }} />
     <Tab.Screen name="Expenses" component={ExpensesStackNavigator} options={{ headerShown: false }} />
@@ -85,3 +113,32 @@ export const MainTabNavigator = () => (
     <Tab.Screen name="Settings" component={SettingsStackNavigator} options={{ headerShown: false }} />
   </Tab.Navigator>
 );
+
+const styles = StyleSheet.create({
+  tabBar: {
+    height: 72,
+    paddingTop: 8,
+    paddingBottom: 10,
+    borderTopWidth: 0,
+    backgroundColor: '#ffffff',
+    elevation: 12,
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: -2 }
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: '600'
+  },
+  iconWrap: {
+    width: 44,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  iconWrapActive: {
+    backgroundColor: COLORS.primary + '1A'
+  }
+});

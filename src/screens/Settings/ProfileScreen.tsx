@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
-import { Button, Text, TextInput } from 'react-native-paper';
+import { Button, Card, TextInput } from 'react-native-paper';
 import { Screen } from '../../components/common/Screen';
 import { useDeleteAccountMutation, useGetProfileQuery, useUpdateProfileMutation } from '../../api/usersApi';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
 
 export const ProfileScreen = () => {
   const { data: profile } = useGetProfileQuery();
@@ -28,29 +29,35 @@ export const ProfileScreen = () => {
 
   return (
     <Screen scroll>
-      <Text variant="headlineSmall" style={styles.title}>Profile</Text>
-      <TextInput mode="outlined" label="Name" value={name} onChangeText={setName} style={styles.input} />
-      <TextInput mode="outlined" label="Phone" value={phoneNumber} onChangeText={setPhoneNumber} style={styles.input} />
-      <TextInput mode="outlined" label="Avatar URL" value={avatarUrl} onChangeText={setAvatarUrl} style={styles.input} />
-      <Button mode="contained" onPress={handleSave} loading={isLoading} disabled={isLoading}>
-        Save
-      </Button>
-      <Button
-        mode="outlined"
-        textColor={COLORS.danger}
-        onPress={async () => {
-          await deleteAccount().unwrap();
-        }}
-        loading={deleting}
-        style={{ marginTop: 12 }}
-      >
-        Delete account
-      </Button>
+      <HeroHeader title="Profile" subtitle="Update your personal details" icon="account" />
+      <Card style={styles.formCard} mode="contained">
+        <Card.Content>
+          <TextInput mode="outlined" label="Name" value={name} onChangeText={setName} style={styles.input} />
+          <TextInput mode="outlined" label="Phone" value={phoneNumber} onChangeText={setPhoneNumber} style={styles.input} />
+          <TextInput mode="outlined" label="Avatar URL" value={avatarUrl} onChangeText={setAvatarUrl} style={styles.input} />
+          <Button mode="contained" onPress={handleSave} loading={isLoading} disabled={isLoading} style={styles.primaryButton}>
+            Save
+          </Button>
+          <Button
+            mode="outlined"
+            textColor={COLORS.danger}
+            onPress={async () => {
+              await deleteAccount().unwrap();
+            }}
+            loading={deleting}
+            style={styles.deleteButton}
+          >
+            Delete account
+          </Button>
+        </Card.Content>
+      </Card>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  title: { color: COLORS.primary, marginBottom: 12 },
-  input: { marginBottom: 12 }
+  formCard: { borderRadius: 0, backgroundColor: '#ffffff', marginHorizontal: -20 },
+  input: { marginBottom: 12, backgroundColor: '#ffffff' },
+  primaryButton: { marginTop: 8 },
+  deleteButton: { marginTop: 12 }
 });

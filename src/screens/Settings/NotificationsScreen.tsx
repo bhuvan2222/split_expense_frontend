@@ -7,6 +7,8 @@ import { useGetNotificationsQuery, useMarkNotificationReadMutation } from '../..
 import { useCreateNotificationMutation } from '../../api/notificationsApi';
 import { useAuth } from '../../hooks/useAuth';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
+import { SectionHeader } from '../../components/common/SectionHeader';
 
 export const NotificationsScreen = () => {
   const { data: notifications = [] } = useGetNotificationsQuery();
@@ -18,12 +20,12 @@ export const NotificationsScreen = () => {
 
   return (
     <Screen>
-      <Text variant="headlineSmall" style={styles.title}>Notifications</Text>
-      <Card style={styles.card}>
+      <HeroHeader title="Notifications" subtitle="Updates and alerts from your groups" icon="bell" />
+      <SectionHeader title="Send test notification" subtitle="Validate your push setup" />
+      <Card style={styles.card} mode="contained">
         <Card.Content>
-          <Text variant="titleMedium">Send test notification</Text>
-          <TextInput mode="outlined" label="Title" value={title} onChangeText={setTitle} style={{ marginTop: 8 }} />
-          <TextInput mode="outlined" label="Body" value={body} onChangeText={setBody} style={{ marginTop: 8 }} />
+          <TextInput mode="outlined" label="Title" value={title} onChangeText={setTitle} style={styles.input} />
+          <TextInput mode="outlined" label="Body" value={body} onChangeText={setBody} style={styles.input} />
           <Button
             mode="contained"
             onPress={async () => {
@@ -33,13 +35,14 @@ export const NotificationsScreen = () => {
               setBody('');
             }}
             loading={sending}
-            style={{ marginTop: 8 }}
+            style={styles.primaryButton}
           >
             Send
           </Button>
         </Card.Content>
       </Card>
 
+      <SectionHeader title="Recent notifications" subtitle="Unread items appear first" />
       {notifications.length === 0 ? (
         <EmptyState title="No notifications" subtitle="You're all caught up." />
       ) : (
@@ -47,7 +50,7 @@ export const NotificationsScreen = () => {
           data={notifications}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <Card style={styles.card}>
+            <Card style={styles.card} mode="contained">
               <Card.Content>
                 <Text>{item.title}</Text>
                 <Text style={styles.body}>{item.body}</Text>
@@ -66,7 +69,8 @@ export const NotificationsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  title: { color: COLORS.primary, marginBottom: 12 },
-  card: { marginBottom: 12, backgroundColor: '#ffffff' },
+  card: { marginBottom: 12, backgroundColor: '#ffffff', borderRadius: 0, marginHorizontal: -20 },
+  input: { marginTop: 8, backgroundColor: '#ffffff' },
+  primaryButton: { marginTop: 8 },
   body: { color: COLORS.muted, marginTop: 4 }
 });

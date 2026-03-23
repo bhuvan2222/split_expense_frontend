@@ -6,6 +6,8 @@ import { Screen } from '../../components/common/Screen';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { useDeleteExpenseMutation, useGetExpenseQuery } from '../../api/expensesApi';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
+import { SectionHeader } from '../../components/common/SectionHeader';
 
 export const ExpenseDetailScreen = () => {
   const navigation = useNavigation<any>();
@@ -30,11 +32,20 @@ export const ExpenseDetailScreen = () => {
 
   return (
     <Screen scroll>
-      <Text variant="headlineSmall" style={styles.title}>{expense.title}</Text>
-      <Text style={styles.subtitle}>{expense.currency} {Number(expense.amount).toFixed(2)}</Text>
-      {expense.description ? <Text style={styles.subtitle}>{expense.description}</Text> : null}
+      <HeroHeader
+        title={expense.title}
+        subtitle={expense.description || 'Expense details and splits'}
+        icon="receipt"
+        badge={expense.currency}
+      >
+        <View style={styles.heroAmountRow}>
+          <Text style={styles.heroAmountLabel}>Total amount</Text>
+          <Text style={styles.heroAmountValue}>{expense.currency} {Number(expense.amount).toFixed(2)}</Text>
+        </View>
+      </HeroHeader>
 
-      <Card style={styles.card}>
+      <SectionHeader title="Payment info" subtitle="Who paid and how it was split" />
+      <Card style={styles.card} mode="contained">
         <Card.Content>
           <Text style={styles.label}>Paid by</Text>
           <Text>{expense.paidBy?.name ?? 'Unknown'}</Text>
@@ -43,9 +54,9 @@ export const ExpenseDetailScreen = () => {
         </Card.Content>
       </Card>
 
-      <Card style={styles.card}>
+      <SectionHeader title="Shares" subtitle="Breakdown per member" />
+      <Card style={styles.card} mode="contained">
         <Card.Content>
-          <Text style={styles.label}>Shares</Text>
           {expense.shares?.map((share) => (
             <View key={share.id} style={styles.shareRow}>
               <Text>{share.userId}</Text>
@@ -66,9 +77,10 @@ export const ExpenseDetailScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  title: { color: COLORS.primary },
-  subtitle: { color: COLORS.muted, marginBottom: 12 },
-  card: { marginBottom: 12, backgroundColor: '#ffffff' },
+  heroAmountRow: { marginTop: 6 },
+  heroAmountLabel: { color: '#94a3b8', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 },
+  heroAmountValue: { color: '#ffffff', fontSize: 26, fontWeight: '700', marginTop: 4 },
+  card: { marginBottom: 12, backgroundColor: '#ffffff', borderRadius: 0, marginHorizontal: -20 },
   label: { color: COLORS.muted, marginTop: 8 },
   shareRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   amount: { color: COLORS.primary, fontWeight: '700' },

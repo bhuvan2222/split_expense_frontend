@@ -8,6 +8,8 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { useJoinByInviteMutation, useListGroupsQuery } from '../../api/groupsApi';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
+import { SectionHeader } from '../../components/common/SectionHeader';
 
 export const GroupsListScreen = () => {
   const navigation = useNavigation<any>();
@@ -17,10 +19,12 @@ export const GroupsListScreen = () => {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Text variant="headlineMedium" style={styles.title}>Your Groups</Text>
-        <Text variant="bodyMedium" style={styles.subtitle}>Manage your shared expenses</Text>
-      </View>
+      <HeroHeader
+        title="Your Groups"
+        subtitle="Manage shared expenses with friends"
+        icon="account-group"
+        badge={`${groups.length} groups`}
+      />
 
       <Card style={styles.joinCard} mode="elevated" elevation={2}>
         <Card.Content>
@@ -56,6 +60,8 @@ export const GroupsListScreen = () => {
         </Card.Content>
       </Card>
 
+      <SectionHeader title="All groups" subtitle="Tap a group to view details" />
+
       {isLoading ? (
         <LoadingSpinner />
       ) : groups.length === 0 ? (
@@ -83,14 +89,11 @@ export const GroupsListScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  header: { marginBottom: 20 },
-  title: { color: COLORS.text, fontWeight: 'bold' },
-  subtitle: { color: COLORS.muted, marginTop: 4 },
-  
   joinCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    marginBottom: 20,
+    borderRadius: 0,
+    marginBottom: 16,
+    marginHorizontal: -20,
   },
   joinHeader: {
     flexDirection: 'row',
@@ -102,7 +105,7 @@ const styles = StyleSheet.create({
   
   joinRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   input: { flex: 1, backgroundColor: '#f8f9fa' },
-  joinButton: { borderRadius: 8, justifyContent: 'center' },
+  joinButton: { borderRadius: 12, justifyContent: 'center' },
   joinButtonText: { fontWeight: 'bold' },
 
   listContainer: { paddingBottom: 80 },

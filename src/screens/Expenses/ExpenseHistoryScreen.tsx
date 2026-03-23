@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlatList, View, StyleSheet } from 'react-native';
-import { FAB, Text } from 'react-native-paper';
+import { FAB } from 'react-native-paper';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Screen } from '../../components/common/Screen';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
@@ -8,6 +8,8 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { ExpenseCard } from '../../components/expense/ExpenseCard';
 import { useListExpensesQuery } from '../../api/expensesApi';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
+import { SectionHeader } from '../../components/common/SectionHeader';
 
 export const ExpenseHistoryScreen = () => {
   const navigation = useNavigation<any>();
@@ -17,10 +19,13 @@ export const ExpenseHistoryScreen = () => {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Text variant="headlineMedium" style={styles.title}>All Expenses</Text>
-        <Text variant="bodyMedium" style={styles.subtitle}>Track your recent activity</Text>
-      </View>
+      <HeroHeader
+        title="All expenses"
+        subtitle="Track your recent activity"
+        icon="receipt"
+        badge={`${expenses.length} total`}
+      />
+      <SectionHeader title="Recent expenses" subtitle="Newest entries appear first" />
 
       {isLoading ? (
         <LoadingSpinner />
@@ -57,10 +62,6 @@ export const ExpenseHistoryScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  header: { marginBottom: 20 },
-  title: { color: COLORS.text, fontWeight: 'bold' },
-  subtitle: { color: COLORS.muted, marginTop: 4 },
-  
   listContainer: { paddingBottom: 100 },
   
   fabContainer: {

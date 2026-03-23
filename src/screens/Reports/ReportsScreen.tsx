@@ -1,9 +1,11 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Card, Text, Avatar, List } from 'react-native-paper';
 import { Screen } from '../../components/common/Screen';
 import { useListExpensesQuery } from '../../api/expensesApi';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
+import { SectionHeader } from '../../components/common/SectionHeader';
 
 // Helper to map categories to icons
 const getCategoryIcon = (category: string) => {
@@ -29,23 +31,19 @@ export const ReportsScreen = () => {
 
   return (
     <Screen scroll>
-      <View style={styles.header}>
-        <Text variant="headlineMedium" style={styles.title}>Reports</Text>
-        <Text variant="bodyMedium" style={styles.subtitle}>Your spending breakdown</Text>
-      </View>
+      <HeroHeader
+        title="Reports"
+        subtitle="Spending insights by category"
+        icon="chart-donut"
+        badge={`${Object.keys(totals).length} categories`}
+      >
+        <View style={styles.heroAmountRow}>
+          <Text style={styles.heroLabel}>Total spending</Text>
+          <Text style={styles.heroAmount}>₹{grandTotal.toFixed(2)}</Text>
+        </View>
+      </HeroHeader>
 
-      {/* Hero Card for Grand Total */}
-      <Card style={styles.heroCard} mode="elevated" elevation={2}>
-        <Card.Content style={styles.heroContent}>
-          <View>
-            <Text style={styles.heroLabel}>Total Spending</Text>
-            <Text style={styles.heroAmount}>₹{grandTotal.toFixed(2)}</Text>
-          </View>
-          <Avatar.Icon size={52} icon="chart-donut" style={styles.heroIcon} color={COLORS.primary} />
-        </Card.Content>
-      </Card>
-
-      <Text variant="titleMedium" style={styles.sectionTitle}>By Category</Text>
+      <SectionHeader title="By category" subtitle="See where your money goes" />
 
       <Card style={styles.listCard} mode="elevated" elevation={1}>
         <Card.Content style={{ padding: 0 }}>
@@ -85,31 +83,16 @@ export const ReportsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  header: { marginBottom: 20 },
-  title: { color: COLORS.text, fontWeight: 'bold' },
-  subtitle: { color: COLORS.muted, marginTop: 4 },
-
-  heroCard: {
-    backgroundColor: COLORS.primary + '1A', // Light primary background
-    borderRadius: 16,
-    marginBottom: 24,
-  },
-  heroContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  heroLabel: { color: COLORS.primary, fontWeight: '600', marginBottom: 4 },
-  heroAmount: { fontSize: 32, fontWeight: 'bold', color: COLORS.primary },
-  heroIcon: { backgroundColor: '#ffffff' },
-
-  sectionTitle: { fontWeight: '600', color: COLORS.text, marginBottom: 12 },
+  heroAmountRow: { marginTop: 6 },
+  heroLabel: { color: '#94a3b8', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 },
+  heroAmount: { fontSize: 28, fontWeight: '700', color: '#ffffff', marginTop: 4 },
   
   listCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: 0,
     overflow: 'hidden',
     marginBottom: 20,
+    marginHorizontal: -20,
   },
   listItem: { paddingVertical: 8, paddingHorizontal: 16 },
   listIcon: { backgroundColor: '#f1f3f5' },

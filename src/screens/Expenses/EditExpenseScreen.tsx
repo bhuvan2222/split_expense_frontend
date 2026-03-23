@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
-import { Button, Text, TextInput } from 'react-native-paper';
+import { Button, Card, TextInput } from 'react-native-paper';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Screen } from '../../components/common/Screen';
 import { useGetExpenseQuery, useUpdateExpenseMutation } from '../../api/expensesApi';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
 
 export const EditExpenseScreen = () => {
   const navigation = useNavigation<any>();
@@ -30,17 +31,22 @@ export const EditExpenseScreen = () => {
 
   return (
     <Screen>
-      <Text variant="headlineSmall" style={styles.title}>Edit expense</Text>
-      <TextInput mode="outlined" label="Title" value={title} onChangeText={setTitle} style={styles.input} />
-      <TextInput mode="outlined" label="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" style={styles.input} />
-      <Button mode="contained" onPress={handleSubmit} loading={isLoading} disabled={isLoading || !title || !amount}>
-        Save changes
-      </Button>
+      <HeroHeader title="Edit expense" subtitle="Adjust details and keep everyone aligned" icon="pencil" />
+      <Card style={styles.formCard} mode="contained">
+        <Card.Content>
+          <TextInput mode="outlined" label="Title" value={title} onChangeText={setTitle} style={styles.input} />
+          <TextInput mode="outlined" label="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" style={styles.input} />
+          <Button mode="contained" onPress={handleSubmit} loading={isLoading} disabled={isLoading || !title || !amount} style={styles.primaryButton}>
+            Save changes
+          </Button>
+        </Card.Content>
+      </Card>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  title: { color: COLORS.primary, marginBottom: 12 },
-  input: { marginBottom: 12 }
+  formCard: { borderRadius: 0, backgroundColor: '#ffffff', marginHorizontal: -20 },
+  input: { marginBottom: 12, backgroundColor: '#ffffff' },
+  primaryButton: { marginTop: 8 }
 });

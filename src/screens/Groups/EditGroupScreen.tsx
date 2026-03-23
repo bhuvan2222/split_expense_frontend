@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button, HelperText, SegmentedButtons, Switch, Text, TextInput } from 'react-native-paper';
+import { Button, Card, HelperText, SegmentedButtons, Switch, Text, TextInput } from 'react-native-paper';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Screen } from '../../components/common/Screen';
 import { useGetGroupQuery, useUpdateGroupMutation } from '../../api/groupsApi';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
 
 const GROUP_TYPES = [
   { value: 'TRIP', label: 'Trip' },
@@ -78,38 +79,44 @@ export const EditGroupScreen = () => {
 
   return (
     <Screen scroll>
-      <Text variant="headlineSmall" style={styles.title}>Edit group</Text>
+      <HeroHeader title="Edit group" subtitle="Update details and preferences" icon="pencil" />
 
-      <TextInput mode="outlined" label="Group name" value={name} onChangeText={setName} style={styles.input} />
-      <TextInput mode="outlined" label="Description" value={description} onChangeText={setDescription} style={styles.input} />
-      <TextInput mode="outlined" label="Emoji" value={emoji} onChangeText={setEmoji} style={styles.input} />
-      <TextInput mode="outlined" label="Currency" value={currency} onChangeText={setCurrency} style={styles.input} />
+      <Card style={styles.formCard} mode="contained">
+        <Card.Content>
+          <TextInput mode="outlined" label="Group name" value={name} onChangeText={setName} style={styles.input} />
+          <TextInput mode="outlined" label="Description" value={description} onChangeText={setDescription} style={styles.input} />
+          <TextInput mode="outlined" label="Emoji" value={emoji} onChangeText={setEmoji} style={styles.input} />
+          <TextInput mode="outlined" label="Currency" value={currency} onChangeText={setCurrency} style={styles.input} />
 
-      <Text style={styles.label}>Type</Text>
-      <SegmentedButtons
-        value={type}
-        onValueChange={setType}
-        buttons={GROUP_TYPES}
-        style={{ marginBottom: 12 }}
-      />
+          <Text style={styles.label}>Type</Text>
+          <SegmentedButtons
+            value={type}
+            onValueChange={setType}
+            buttons={GROUP_TYPES}
+            style={styles.segmented}
+          />
 
-      <View style={styles.toggleRow}>
-        <Text style={styles.label}>Simplify debts</Text>
-        <Switch value={simplifyDebts} onValueChange={setSimplifyDebts} />
-      </View>
+          <View style={styles.toggleRow}>
+            <Text style={styles.label}>Simplify debts</Text>
+            <Switch value={simplifyDebts} onValueChange={setSimplifyDebts} />
+          </View>
 
-      {error ? <HelperText type="error">{error}</HelperText> : null}
+          {error ? <HelperText type="error">{error}</HelperText> : null}
 
-      <Button mode="contained" onPress={handleSave} loading={saving} disabled={saving}>
-        Save changes
-      </Button>
+          <Button mode="contained" onPress={handleSave} loading={saving} disabled={saving} style={styles.primaryButton}>
+            Save changes
+          </Button>
+        </Card.Content>
+      </Card>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  title: { marginBottom: 16, color: COLORS.primary },
-  input: { marginBottom: 12 },
-  label: { color: COLORS.text, marginTop: 8, marginBottom: 6 },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }
+  formCard: { borderRadius: 0, backgroundColor: '#ffffff', marginHorizontal: -20 },
+  input: { marginBottom: 12, backgroundColor: '#ffffff' },
+  label: { color: COLORS.text, marginTop: 8, marginBottom: 6, fontWeight: '600' },
+  segmented: { marginBottom: 12 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  primaryButton: { marginTop: 8 }
 });

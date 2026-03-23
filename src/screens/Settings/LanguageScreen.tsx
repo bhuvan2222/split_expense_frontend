@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import { Button, Card } from 'react-native-paper';
 import { Screen } from '../../components/common/Screen';
 import { useGetProfileQuery, useUpdateProfileMutation } from '../../api/usersApi';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -28,28 +29,33 @@ export const LanguageScreen = () => {
 
   return (
     <Screen>
-      <Text variant="headlineSmall" style={styles.title}>Language</Text>
-      <View style={styles.choiceRow}>
-        {LANGUAGES.map((lang) => (
-          <Button
-            key={lang.code}
-            mode={selected === lang.code ? 'contained' : 'outlined'}
-            onPress={() => setSelected(lang.code)}
-            style={styles.choiceButton}
-          >
-            {lang.label}
+      <HeroHeader title="Language" subtitle="Choose your preferred language" icon="translate" />
+      <Card style={styles.card} mode="contained">
+        <Card.Content>
+          <View style={styles.choiceRow}>
+            {LANGUAGES.map((lang) => (
+              <Button
+                key={lang.code}
+                mode={selected === lang.code ? 'contained' : 'outlined'}
+                onPress={() => setSelected(lang.code)}
+                style={styles.choiceButton}
+              >
+                {lang.label}
+              </Button>
+            ))}
+          </View>
+          <Button mode="contained" onPress={handleSave} loading={isLoading} disabled={isLoading} style={styles.primaryButton}>
+            Save
           </Button>
-        ))}
-      </View>
-      <Button mode="contained" onPress={handleSave} loading={isLoading} disabled={isLoading}>
-        Save
-      </Button>
+        </Card.Content>
+      </Card>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  title: { color: COLORS.primary, marginBottom: 12 },
+  card: { borderRadius: 0, backgroundColor: '#ffffff', marginHorizontal: -20 },
   choiceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  choiceButton: { marginBottom: 6 }
+  choiceButton: { marginBottom: 6, borderRadius: 10 },
+  primaryButton: { marginTop: 8 }
 });

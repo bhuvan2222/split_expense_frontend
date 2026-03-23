@@ -5,7 +5,7 @@ import { COLORS } from '../../constants/colors';
 import type { BalanceLine } from '../../api/groupsApi';
 
 export const BalanceSummary = ({ balances }: { balances: BalanceLine[] }) => (
-  <Card style={styles.card}>
+  <Card style={styles.card} mode="contained">
     <Card.Content>
       <Text variant="titleMedium">Balances</Text>
       {balances.length === 0 ? (
@@ -25,7 +25,7 @@ export const BalanceSummary = ({ balances }: { balances: BalanceLine[] }) => (
 );
 
 const styles = StyleSheet.create({
-  card: { marginBottom: 12, backgroundColor: '#ffffff' },
+  card: { marginBottom: 12, backgroundColor: '#ffffff', borderRadius: 0, marginHorizontal: -20 },
   line: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginTop: 8 },
   name: { color: COLORS.text, fontWeight: '600' },
   muted: { color: COLORS.muted },

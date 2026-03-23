@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button, HelperText, Menu, Text, TextInput, SegmentedButtons } from 'react-native-paper';
+import { Button, Card, HelperText, Menu, Text, TextInput, SegmentedButtons } from 'react-native-paper';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Screen } from '../../components/common/Screen';
 import { useAddMemberMutation, useCreateGroupMutation, useListGroupsQuery, useListMembersQuery } from '../../api/groupsApi';
@@ -8,6 +8,7 @@ import { useCreateExpenseMutation } from '../../api/expensesApi';
 import { useSearchUsersQuery } from '../../api/usersApi';
 import { COLORS } from '../../constants/colors';
 import { useAuth } from '../../hooks/useAuth';
+import { HeroHeader } from '../../components/common/HeroHeader';
 
 export const AddExpenseScreen = () => {
   const navigation = useNavigation<any>();
@@ -156,196 +157,203 @@ export const AddExpenseScreen = () => {
 
   return (
     <Screen scroll>
-      <Text variant="headlineSmall" style={styles.title}>Add expense</Text>
+      <HeroHeader title="Add expense" subtitle="Split fairly and keep everyone in sync" icon="receipt" />
 
-      <Text style={styles.label}>Mode</Text>
-      <SegmentedButtons
-        value={mode}
-        onValueChange={(value) => setMode(value as any)}
-        buttons={[
-          { value: 'GROUP', label: 'Group' },
-          { value: 'QUICK', label: 'Quick split' }
-        ]}
-        style={{ marginBottom: 12 }}
-      />
+      <Card style={styles.formCard} mode="contained">
+        <Card.Content>
+          <Text style={styles.label}>Mode</Text>
+          <SegmentedButtons
+            value={mode}
+            onValueChange={(value) => setMode(value as any)}
+            buttons={[
+              { value: 'GROUP', label: 'Group' },
+              { value: 'QUICK', label: 'Quick split' }
+            ]}
+            style={styles.segmented}
+          />
 
-      {mode === 'GROUP' ? (
-        <>
-          <Text style={styles.label}>Group</Text>
-          <View style={styles.choiceRow}>
-            {groups.map((group) => (
-              <Button
-                key={group.id}
-                mode={group.id === groupId ? 'contained' : 'outlined'}
-                onPress={() => setGroupId(group.id)}
-                style={styles.choiceButton}
-              >
-                {group.emoji ? `${group.emoji} ` : ''}{group.name}
-              </Button>
-            ))}
-          </View>
-        </>
-      ) : (
-        <>
-          <Text style={styles.label}>People</Text>
+          {mode === 'GROUP' ? (
+            <>
+              <Text style={styles.label}>Group</Text>
+              <View style={styles.choiceRow}>
+                {groups.map((group) => (
+                  <Button
+                    key={group.id}
+                    mode={group.id === groupId ? 'contained' : 'outlined'}
+                    onPress={() => setGroupId(group.id)}
+                    style={styles.choiceButton}
+                  >
+                    {group.emoji ? `${group.emoji} ` : ''}{group.name}
+                  </Button>
+                ))}
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.label}>People</Text>
+              <TextInput
+                mode="outlined"
+                label="Search by name or email"
+                value={search}
+                onChangeText={setSearch}
+                style={styles.input}
+              />
+              {results
+                .filter((u) => u.id !== user?.id)
+                .map((u) => {
+                  const already = selectedUsers.some((s) => s.id === u.id);
+                  return (
+                    <Button
+                      key={u.id}
+                      mode={already ? 'contained' : 'outlined'}
+                      onPress={() => {
+                        if (already) {
+                          setSelectedUsers((prev) => prev.filter((s) => s.id !== u.id));
+                        } else {
+                          setSelectedUsers((prev) => [...prev, { id: u.id, name: u.name, email: u.email }]);
+                        }
+                      }}
+                      style={styles.choiceButton}
+                    >
+                      {u.name} ({u.email})
+                    </Button>
+                  );
+                })}
+
+              {quickParticipants.length > 0 ? (
+                <View style={styles.selectedList}>
+                  <Text style={styles.muted}>Selected:</Text>
+                  {quickParticipants.map((u) => (
+                    <Text key={u.id} style={styles.selectedItem}>{u.name}</Text>
+                  ))}
+                </View>
+              ) : null}
+            </>
+          )}
+
+          <TextInput mode="outlined" label="Title" value={title} onChangeText={setTitle} style={styles.input} />
+          <TextInput mode="outlined" label="Description" value={description} onChangeText={setDescription} style={styles.input} />
           <TextInput
             mode="outlined"
-            label="Search by name or email"
-            value={search}
-            onChangeText={setSearch}
+            label="Amount"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
             style={styles.input}
           />
-          {results
-            .filter((u) => u.id !== user?.id)
-            .map((u) => {
-              const already = selectedUsers.some((s) => s.id === u.id);
-              return (
-                <Button
-                  key={u.id}
-                  mode={already ? 'contained' : 'outlined'}
-                  onPress={() => {
-                    if (already) {
-                      setSelectedUsers((prev) => prev.filter((s) => s.id !== u.id));
-                    } else {
-                      setSelectedUsers((prev) => [...prev, { id: u.id, name: u.name, email: u.email }]);
-                    }
-                  }}
-                  style={styles.choiceButton}
-                >
-                  {u.name} ({u.email})
-                </Button>
-              );
-            })}
 
-          {quickParticipants.length > 0 ? (
-            <View style={styles.selectedList}>
-              <Text style={styles.muted}>Selected:</Text>
-              {quickParticipants.map((u) => (
-                <Text key={u.id} style={styles.selectedItem}>{u.name}</Text>
+          {mode === 'GROUP' ? (
+            <>
+              <Text style={styles.label}>Paid by</Text>
+              <Menu
+                visible={paidByMenuVisible}
+                onDismiss={() => setPaidByMenuVisible(false)}
+                anchor={
+                  <Button mode="outlined" onPress={() => setPaidByMenuVisible(true)} style={styles.choiceButton}>
+                    {members.find((m) => m.user.id === paidById)?.user.name ?? 'Select member'}
+                  </Button>
+                }
+              >
+                {members.map((member) => (
+                  <Menu.Item
+                    key={member.id}
+                    onPress={() => {
+                      setPaidById(member.user.id);
+                      setPaidByMenuVisible(false);
+                    }}
+                    title={member.user.name}
+                  />
+                ))}
+              </Menu>
+            </>
+          ) : (
+            <>
+              <Text style={styles.label}>Paid by</Text>
+              <Menu
+                visible={paidByMenuVisible}
+                onDismiss={() => setPaidByMenuVisible(false)}
+                anchor={
+                  <Button mode="outlined" onPress={() => setPaidByMenuVisible(true)} style={styles.choiceButton}>
+                    {quickParticipants.find((p) => p.id === paidById)?.name ?? 'Select payer'}
+                  </Button>
+                }
+              >
+                {quickParticipants.map((participant) => (
+                  <Menu.Item
+                    key={participant.id}
+                    onPress={() => {
+                      setPaidById(participant.id);
+                      setPaidByMenuVisible(false);
+                    }}
+                    title={participant.name}
+                  />
+                ))}
+              </Menu>
+            </>
+          )}
+
+          <Text style={styles.label}>Split type</Text>
+          <SegmentedButtons
+            value={splitType}
+            onValueChange={(value) => setSplitType(value as any)}
+            buttons={[
+              { value: 'EQUAL', label: 'Equal' },
+              { value: 'UNEQUAL', label: 'Unequal' },
+              { value: 'PERCENTAGE', label: '%' },
+              { value: 'SHARES', label: 'Shares' }
+            ]}
+            style={styles.segmented}
+          />
+
+          {splitType !== 'EQUAL' ? (
+            <View style={styles.splitList}>
+              {(mode === 'GROUP' ? members.map((m) => ({ id: m.user.id, name: m.user.name })) : quickParticipants).map((person) => (
+                <TextInput
+                  key={person.id}
+                  mode="outlined"
+                  label={`${person.name} ${splitType === 'PERCENTAGE' ? '(%)' : splitType === 'SHARES' ? '(shares)' : '(amount)'}`}
+                  value={splitValues[person.id] ?? ''}
+                  onChangeText={(value) => setSplitValues((prev) => ({ ...prev, [person.id]: value }))}
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
               ))}
             </View>
           ) : null}
-        </>
-      )}
 
-      <TextInput mode="outlined" label="Title" value={title} onChangeText={setTitle} style={styles.input} />
-      <TextInput mode="outlined" label="Description" value={description} onChangeText={setDescription} style={styles.input} />
-      <TextInput
-        mode="outlined"
-        label="Amount"
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="numeric"
-        style={styles.input}
-      />
+          {mode === 'GROUP' ? (
+            <Button mode="contained" onPress={handleSubmit} loading={isLoading} disabled={isLoading || !title || !amount} style={styles.primaryButton}>
+              Save expense
+            </Button>
+          ) : (
+            <Button
+              mode="contained"
+              onPress={handleQuickSplit}
+              loading={isLoading || creatingGroup || addingMember}
+              disabled={isLoading || creatingGroup || addingMember}
+              style={styles.primaryButton}
+            >
+              Create quick split
+            </Button>
+          )}
 
-      {mode === 'GROUP' ? (
-        <>
-          <Text style={styles.label}>Paid by</Text>
-          <Menu
-            visible={paidByMenuVisible}
-            onDismiss={() => setPaidByMenuVisible(false)}
-            anchor={
-              <Button mode="outlined" onPress={() => setPaidByMenuVisible(true)}>
-                {members.find((m) => m.user.id === paidById)?.user.name ?? 'Select member'}
-              </Button>
-            }
-          >
-            {members.map((member) => (
-              <Menu.Item
-                key={member.id}
-                onPress={() => {
-                  setPaidById(member.user.id);
-                  setPaidByMenuVisible(false);
-                }}
-                title={member.user.name}
-              />
-            ))}
-          </Menu>
-        </>
-      ) : (
-        <>
-          <Text style={styles.label}>Paid by</Text>
-          <Menu
-            visible={paidByMenuVisible}
-            onDismiss={() => setPaidByMenuVisible(false)}
-            anchor={
-              <Button mode="outlined" onPress={() => setPaidByMenuVisible(true)}>
-                {quickParticipants.find((p) => p.id === paidById)?.name ?? 'Select payer'}
-              </Button>
-            }
-          >
-            {quickParticipants.map((participant) => (
-              <Menu.Item
-                key={participant.id}
-                onPress={() => {
-                  setPaidById(participant.id);
-                  setPaidByMenuVisible(false);
-                }}
-                title={participant.name}
-              />
-            ))}
-          </Menu>
-        </>
-      )}
-
-      <Text style={styles.label}>Split type</Text>
-      <SegmentedButtons
-        value={splitType}
-        onValueChange={(value) => setSplitType(value as any)}
-        buttons={[
-          { value: 'EQUAL', label: 'Equal' },
-          { value: 'UNEQUAL', label: 'Unequal' },
-          { value: 'PERCENTAGE', label: '%' },
-          { value: 'SHARES', label: 'Shares' }
-        ]}
-        style={{ marginBottom: 12 }}
-      />
-
-      {splitType !== 'EQUAL' ? (
-        <View style={styles.splitList}>
-          {(mode === 'GROUP' ? members.map((m) => ({ id: m.user.id, name: m.user.name })) : quickParticipants).map((person) => (
-            <TextInput
-              key={person.id}
-              mode="outlined"
-              label={`${person.name} ${splitType === 'PERCENTAGE' ? '(%)' : splitType === 'SHARES' ? '(shares)' : '(amount)'}`}
-              value={splitValues[person.id] ?? ''}
-              onChangeText={(value) => setSplitValues((prev) => ({ ...prev, [person.id]: value }))}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-          ))}
-        </View>
-      ) : null}
-
-      {mode === 'GROUP' ? (
-        <Button mode="contained" onPress={handleSubmit} loading={isLoading} disabled={isLoading || !title || !amount}>
-          Save expense
-        </Button>
-      ) : (
-        <Button
-          mode="contained"
-          onPress={handleQuickSplit}
-          loading={isLoading || creatingGroup || addingMember}
-          disabled={isLoading || creatingGroup || addingMember}
-        >
-          Create quick split
-        </Button>
-      )}
-
-      {error ? <HelperText type="error">{error}</HelperText> : null}
+          {error ? <HelperText type="error">{error}</HelperText> : null}
+        </Card.Content>
+      </Card>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  title: { marginBottom: 16, color: COLORS.primary },
-  label: { marginTop: 12, marginBottom: 6, color: COLORS.text },
-  input: { marginBottom: 12 },
+  formCard: { borderRadius: 0, backgroundColor: '#ffffff', marginHorizontal: -20 },
+  label: { marginTop: 12, marginBottom: 6, color: COLORS.text, fontWeight: '600' },
+  segmented: { marginBottom: 12 },
+  input: { marginBottom: 12, backgroundColor: '#ffffff' },
   choiceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  choiceButton: { marginBottom: 6 },
+  choiceButton: { marginBottom: 6, borderRadius: 10 },
   splitList: { marginTop: 8 },
   selectedList: { marginVertical: 8 },
   selectedItem: { color: COLORS.text, marginBottom: 4 },
-  muted: { color: COLORS.muted, marginBottom: 12 }
+  muted: { color: COLORS.muted, marginBottom: 12 },
+  primaryButton: { marginTop: 8 }
 });

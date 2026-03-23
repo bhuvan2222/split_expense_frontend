@@ -4,6 +4,7 @@ import { Button, Card, Text, TextInput } from 'react-native-paper';
 import { Screen } from '../../components/common/Screen';
 import { useCreateSubscriptionMutation, useSubscriptionStatusQuery, useVerifySubscriptionMutation } from '../../api/paymentsApi';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
 
 export const PremiumScreen = () => {
   const { data: status } = useSubscriptionStatusQuery();
@@ -29,31 +30,36 @@ export const PremiumScreen = () => {
 
   return (
     <Screen scroll>
-      <Text variant="headlineSmall" style={styles.title}>Premium</Text>
-      <Card style={styles.card}>
+      <HeroHeader title="Premium" subtitle="Unlock advanced features and exports" icon="star" />
+      <Card style={styles.card} mode="contained">
         <Card.Content>
           <Text>Status: {status?.status ?? 'INACTIVE'}</Text>
           {status?.premiumExpiresAt ? <Text>Expires: {status.premiumExpiresAt}</Text> : null}
         </Card.Content>
       </Card>
 
-      <TextInput mode="outlined" label="Amount (INR)" value={amount} onChangeText={setAmount} keyboardType="numeric" style={styles.input} />
-      <Button mode="contained" onPress={handleCreate} loading={creating}>
-        Create Razorpay order
-      </Button>
+      <Card style={styles.formCard} mode="contained">
+        <Card.Content>
+          <TextInput mode="outlined" label="Amount (INR)" value={amount} onChangeText={setAmount} keyboardType="numeric" style={styles.input} />
+          <Button mode="contained" onPress={handleCreate} loading={creating}>
+            Create Razorpay order
+          </Button>
 
-      <TextInput mode="outlined" label="Order ID" value={orderId} onChangeText={setOrderId} style={styles.input} />
-      <TextInput mode="outlined" label="Payment ID" value={paymentId} onChangeText={setPaymentId} style={styles.input} />
-      <TextInput mode="outlined" label="Signature" value={signature} onChangeText={setSignature} style={styles.input} />
-      <Button mode="outlined" onPress={handleVerify} loading={verifying}>
-        Verify payment
-      </Button>
+          <TextInput mode="outlined" label="Order ID" value={orderId} onChangeText={setOrderId} style={styles.input} />
+          <TextInput mode="outlined" label="Payment ID" value={paymentId} onChangeText={setPaymentId} style={styles.input} />
+          <TextInput mode="outlined" label="Signature" value={signature} onChangeText={setSignature} style={styles.input} />
+          <Button mode="outlined" onPress={handleVerify} loading={verifying} style={styles.verifyButton}>
+            Verify payment
+          </Button>
+        </Card.Content>
+      </Card>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  title: { color: COLORS.primary, marginBottom: 12 },
-  card: { marginBottom: 12, backgroundColor: '#ffffff' },
-  input: { marginBottom: 12 }
+  card: { marginBottom: 12, backgroundColor: '#ffffff', borderRadius: 0, marginHorizontal: -20 },
+  formCard: { borderRadius: 0, backgroundColor: '#ffffff', marginHorizontal: -20 },
+  input: { marginBottom: 12, backgroundColor: '#ffffff' },
+  verifyButton: { marginTop: 6 }
 });

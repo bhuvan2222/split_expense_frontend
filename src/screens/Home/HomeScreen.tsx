@@ -1,13 +1,17 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Card, Text, Avatar } from 'react-native-paper';
+import { Card, Text, Avatar, Button } from 'react-native-paper';
 import { Screen } from '../../components/common/Screen';
 import { useListGroupsQuery } from '../../api/groupsApi';
 import { useListExpensesQuery } from '../../api/expensesApi';
 import { useListSettlementsQuery } from '../../api/settlementsApi';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
+import { SectionHeader } from '../../components/common/SectionHeader';
+import { useNavigation } from '@react-navigation/native';
 
 export const HomeScreen = () => {
+  const navigation = useNavigation<any>();
   const { data: groups = [] } = useListGroupsQuery();
   const { data: expenses = [] } = useListExpensesQuery();
   const { data: settlements = [] } = useListSettlementsQuery();
@@ -16,23 +20,19 @@ export const HomeScreen = () => {
 
   return (
     <Screen scroll>
-      <View style={styles.header}>
-        <Text variant="headlineMedium" style={styles.title}>Dashboard</Text>
-        <Text variant="bodyMedium" style={styles.subtitle}>Here is your expense summary</Text>
-      </View>
+      <HeroHeader
+        title="Dashboard"
+        subtitle="Your expense overview at a glance"
+        icon="chart-bar"
+        badge={`${groups.length} groups`}
+      >
+        <View style={styles.heroAmountRow}>
+          <Text style={styles.heroLabel}>Total spent</Text>
+          <Text style={styles.heroMetric}>{totalSpent.toFixed(2)} <Text style={styles.heroCurrency}>INR</Text></Text>
+        </View>
+      </HeroHeader>
 
-      {/* Prominent Hero Card for Total Spent */}
-      <Card style={styles.heroCard} mode="elevated" elevation={3}>
-        <Card.Content style={styles.heroContent}>
-          <View style={styles.heroTextContainer}>
-            <Text style={styles.heroLabel}>Total Spent</Text>
-            <Text style={styles.heroMetric}>{totalSpent.toFixed(2)} <Text style={styles.heroCurrency}>INR</Text></Text>
-          </View>
-          <Avatar.Icon size={56} icon="wallet" style={styles.heroIcon} color={COLORS.primary} />
-        </Card.Content>
-      </Card>
-
-      <Text variant="titleMedium" style={styles.sectionTitle}>Quick Stats</Text>
+      <SectionHeader title="Quick stats" subtitle="Groups, expenses, and settlements" />
 
       <View style={styles.grid}>
         <Card style={styles.statCard} mode="contained">
@@ -59,43 +59,42 @@ export const HomeScreen = () => {
           </Card.Content>
         </Card>
       </View>
+
+      <Card style={styles.ctaCard} mode="contained">
+        <Card.Content style={styles.ctaContent}>
+          <View>
+            <Text style={styles.ctaTitle}>Add an expense</Text>
+            <Text style={styles.ctaSubtitle}>Capture a split in seconds</Text>
+          </View>
+          <Button mode="contained" onPress={() => navigation.navigate('Expenses', { screen: 'AddExpense' })}>
+            Add expense
+          </Button>
+        </Card.Content>
+      </Card>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  header: { marginBottom: 20 },
-  title: { color: COLORS.text, fontWeight: 'bold' },
-  subtitle: { color: COLORS.muted, marginTop: 4 },
-  
-  heroCard: { 
-    marginBottom: 24, 
-    backgroundColor: COLORS.primary,
-    borderRadius: 20,
-  },
-  heroContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  heroTextContainer: { flex: 1 },
-  heroLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '600', marginBottom: 4 },
-  heroMetric: { fontSize: 32, fontWeight: 'bold', color: '#ffffff' },
-  heroCurrency: { fontSize: 18, fontWeight: 'normal', color: 'rgba(255,255,255,0.8)' },
-  heroIcon: { backgroundColor: 'rgba(255,255,255,0.2)' },
-
-  sectionTitle: { marginBottom: 12, fontWeight: '600', color: COLORS.text },
+  heroAmountRow: { marginTop: 6 },
+  heroLabel: { color: '#94a3b8', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 },
+  heroMetric: { fontSize: 30, fontWeight: '700', color: '#ffffff', marginTop: 4 },
+  heroCurrency: { fontSize: 16, fontWeight: 'normal', color: '#cbd5f5' },
   
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   statCard: { 
     flex: 1, 
     minWidth: '30%', 
-    backgroundColor: '#f8f9fa',
-    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 0,
   },
   statContent: { alignItems: 'center', paddingVertical: 16 },
   statIcon: { backgroundColor: 'transparent', marginBottom: 4 },
   metric: { fontSize: 22, fontWeight: '700', color: COLORS.text },
   label: { color: COLORS.muted, fontSize: 12, marginTop: 2, fontWeight: '500' }
+  ,
+  ctaCard: { marginTop: 16, borderRadius: 0, backgroundColor: '#ffffff', marginHorizontal: -20 },
+  ctaContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  ctaTitle: { color: COLORS.text, fontWeight: '700', fontSize: 16 },
+  ctaSubtitle: { color: COLORS.muted, marginTop: 4 }
 });

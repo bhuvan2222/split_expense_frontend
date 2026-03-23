@@ -1,11 +1,86 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
-import { Button, Card, Text, TextInput, Avatar, Chip } from 'react-native-paper';
+import { Button, Card, Text, TextInput, Avatar, Chip, IconButton } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../../components/common/Screen';
 import { useListGroupsQuery, useListMembersQuery } from '../../api/groupsApi';
 import { useCreateSettlementMutation, useInitiateUpiMutation, useListSettlementsQuery, useUpdateSettlementStatusMutation } from '../../api/settlementsApi';
 import { COLORS } from '../../constants/colors';
+
+type SelectOption = { id: string; label: string; subtitle?: string };
+
+const SearchSelect = ({
+  label,
+  placeholder,
+  value,
+  options,
+  onSelect
+}: {
+  label: string;
+  placeholder?: string;
+  value?: string;
+  options: SelectOption[];
+  onSelect: (id: string) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const filtered = options.filter((option) =>
+    option.label.toLowerCase().includes(normalizedQuery)
+  );
+
+  const handleClose = () => {
+    setOpen(false);
+    setQuery('');
+  };
+
+  const selectedLabel = options.find((o) => o.id === value)?.label ?? '';
+  const displayValue = open ? query : selectedLabel;
+
+  return (
+    <View style={styles.selectWrap}>
+      <TextInput
+        mode="outlined"
+        label={label}
+        value={displayValue}
+        placeholder={placeholder}
+        onFocus={() => setOpen(true)}
+        onChangeText={(text) => {
+          if (!open) setOpen(true);
+          setQuery(text);
+        }}
+        style={styles.selectInput}
+        right={<TextInput.Icon icon={open ? 'chevron-up' : 'chevron-down'} />}
+      />
+
+      {open ? (
+        <View style={styles.inlineList}>
+          <ScrollView style={styles.inlineScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            {filtered.map((option) => (
+              <Button
+                key={option.id}
+                mode="text"
+                onPress={() => {
+                  onSelect(option.id);
+                  handleClose();
+                }}
+                style={styles.inlineOption}
+                contentStyle={styles.inlineOptionContent}
+                labelStyle={styles.inlineOptionText}
+              >
+                {option.label}
+              </Button>
+            ))}
+            {filtered.length === 0 ? (
+              <Text style={styles.inlineEmpty}>No results found.</Text>
+            ) : null}
+          </ScrollView>
+        </View>
+      ) : null}
+    </View>
+  );
+};
 
 export const SettlementsScreen = () => {
   const navigation = useNavigation<any>();
@@ -35,6 +110,22 @@ export const SettlementsScreen = () => {
     }
   }, [members, fromUserId, toUserId]);
 
+  const summary = useMemo(() => {
+    const total = settlements.length;
+    const pending = settlements.filter((s) => s.status !== 'COMPLETED');
+    const pendingCount = pending.length;
+    const completedCount = total - pendingCount;
+    const pendingAmount = pending.reduce((acc, s) => acc + Number(s.amount || 0), 0);
+    const currency = settlements[0]?.currency ?? '₹';
+    return { total, pendingCount, completedCount, pendingAmount, currency };
+  }, [settlements]);
+
+  const handleSwap = () => {
+    if (!fromUserId || !toUserId) return;
+    setFromUserId(toUserId);
+    setToUserId(fromUserId);
+  };
+
   const handleCreate = async () => {
     if (!groupId || !fromUserId || !toUserId) return;
     await createSettlement({ groupId, fromUserId, toUserId, amount: Number(amount), method: 'CASH' }).unwrap();
@@ -49,62 +140,90 @@ export const SettlementsScreen = () => {
 
   return (
     <Screen scroll>
-      <View style={styles.header}>
-        <Text variant="headlineMedium" style={styles.title}>Settle Up</Text>
-        <Text variant="bodyMedium" style={styles.subtitle}>Clear your balances</Text>
+      <Card style={styles.heroCard} mode="contained">
+        <View style={styles.heroGlowTop} />
+        <View style={styles.heroGlowBottom} />
+        <Card.Content>
+          <View style={styles.heroHeader}>
+            <View>
+              <Text variant="headlineSmall" style={styles.heroTitle}>Settle Up</Text>
+              <Text variant="bodyMedium" style={styles.heroSubtitle}>Clear balances across your groups</Text>
+            </View>
+            <View style={styles.heroBadge}>
+              <Text style={styles.heroBadgeText}>{summary.completedCount} done</Text>
+            </View>
+          </View>
+          <View style={styles.heroAmountRow}>
+            <Text style={styles.heroAmountLabel}>Pending to settle</Text>
+            <Text style={styles.heroAmountValue}>{summary.currency} {summary.pendingAmount.toFixed(2)}</Text>
+          </View>
+          <View style={styles.statRow}>
+            <View style={styles.statPill}>
+              <Text style={styles.statValue}>{members.length}</Text>
+              <Text style={styles.statLabel}>Members</Text>
+            </View>
+            <View style={styles.statPill}>
+              <Text style={styles.statValue}>{summary.total}</Text>
+              <Text style={styles.statLabel}>Settlements</Text>
+            </View>
+            <View style={styles.statPill}>
+              <Text style={styles.statValue}>{summary.pendingCount}</Text>
+              <Text style={styles.statLabel}>Pending</Text>
+            </View>
+          </View>
+        </Card.Content>
+      </Card>
+
+      <View style={styles.sectionHeader}>
+        <Text variant="titleMedium" style={styles.sectionTitle}>Create settlement</Text>
+        <Text style={styles.sectionSubtitle}>Pick a group and set who pays whom</Text>
       </View>
 
-      <Card style={styles.formCard} mode="elevated" elevation={1}>
+      <Card style={styles.formCard} mode="elevated" elevation={2}>
         <Card.Content>
-          <Text style={styles.label}>Select Group</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-            {groups.map((group) => (
-              <Chip
-                key={group.id}
-                selected={group.id === groupId}
-                onPress={() => setGroupId(group.id)}
-                style={[styles.chip, group.id === groupId && styles.chipSelected]}
-                textStyle={group.id === groupId ? styles.chipTextSelected : styles.chipText}
-              >
-                {group.name}
-              </Chip>
-            ))}
-          </ScrollView>
+          <SearchSelect
+            label="Select group"
+            placeholder="Choose a group"
+            value={groupId}
+            options={groups.map((group) => ({
+              id: group.id,
+              label: `${group.emoji ? `${group.emoji} ` : ''}${group.name}`
+            }))}
+            onSelect={setGroupId}
+          />
 
-          <View style={styles.row}>
-            <View style={styles.halfWidth}>
-              <Text style={styles.label}>Who is paying?</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-                {members.map((member) => (
-                  <Chip
-                    key={`from-${member.id}`}
-                    selected={member.user.id === fromUserId}
-                    onPress={() => setFromUserId(member.user.id)}
-                    style={[styles.chip, member.user.id === fromUserId && styles.chipSelected]}
-                    textStyle={member.user.id === fromUserId ? styles.chipTextSelected : styles.chipText}
-                  >
-                    {member.user.name}
-                  </Chip>
-                ))}
-              </ScrollView>
-            </View>
+          <SearchSelect
+            label="Who is paying?"
+            placeholder="Select payer"
+            value={fromUserId}
+            options={members.map((member) => ({
+              id: member.user.id,
+              label: member.user.name
+            }))}
+            onSelect={setFromUserId}
+          />
 
-            <View style={styles.halfWidth}>
-              <Text style={styles.label}>To whom?</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-                {members.map((member) => (
-                  <Chip
-                    key={`to-${member.id}`}
-                    selected={member.user.id === toUserId}
-                    onPress={() => setToUserId(member.user.id)}
-                    style={[styles.chip, member.user.id === toUserId && styles.chipSelected]}
-                    textStyle={member.user.id === toUserId ? styles.chipTextSelected : styles.chipText}
-                  >
-                    {member.user.name}
-                  </Chip>
-                ))}
-              </ScrollView>
-            </View>
+          <SearchSelect
+            label="To whom?"
+            placeholder="Select receiver"
+            value={toUserId}
+            options={members.map((member) => ({
+              id: member.user.id,
+              label: member.user.name
+            }))}
+            onSelect={setToUserId}
+          />
+
+          <View style={styles.swapRow}>
+            <Text style={styles.swapHint}>Swap payer and receiver</Text>
+            <IconButton
+              icon="swap-vertical"
+              mode="contained-tonal"
+              size={20}
+              onPress={handleSwap}
+              style={styles.swapButton}
+              iconColor={COLORS.primary}
+            />
           </View>
 
           <TextInput
@@ -118,6 +237,20 @@ export const SettlementsScreen = () => {
             activeOutlineColor={COLORS.primary}
           />
 
+          <View style={styles.presetRow}>
+            {['50', '100', '250', '500', '1000'].map((preset) => (
+              <Chip
+                key={preset}
+                compact
+                style={styles.presetChip}
+                onPress={() => setAmount(preset)}
+                textStyle={styles.presetText}
+              >
+                {preset}
+              </Chip>
+            ))}
+          </View>
+
           <View style={styles.actions}>
             <Button 
               mode="contained" 
@@ -126,7 +259,7 @@ export const SettlementsScreen = () => {
               disabled={!amount}
               style={styles.actionButton}
             >
-              Cash Settlement
+              Record Cash
             </Button>
             <Button 
               mode="contained-tonal" 
@@ -143,16 +276,19 @@ export const SettlementsScreen = () => {
         </Card.Content>
       </Card>
 
-      <Text variant="titleMedium" style={styles.sectionTitle}>Recent Settlements</Text>
+      <View style={styles.sectionHeader}>
+        <Text variant="titleMedium" style={styles.sectionTitle}>Recent settlements</Text>
+        <Text style={styles.sectionSubtitle}>Track progress and mark completed</Text>
+      </View>
       
       {settlements.map((item) => (
         <Card key={item.id} style={styles.historyCard} mode="contained">
           <Card.Content>
             <View style={styles.historyHeader}>
               <View style={styles.usersRow}>
-                <Avatar.Text size={32} label={(item.fromUser?.name || item.fromUserId).substring(0,2).toUpperCase()} style={styles.avatar} />
-                <Avatar.Icon size={24} icon="arrow-right" style={styles.arrowIcon} color={COLORS.muted} />
-                <Avatar.Text size={32} label={(item.toUser?.name || item.toUserId).substring(0,2).toUpperCase()} style={styles.avatar} />
+                <Avatar.Text size={36} label={(item.fromUser?.name || item.fromUserId).substring(0,2).toUpperCase()} style={styles.avatar} />
+                <View style={styles.flowLine} />
+                <Avatar.Text size={36} label={(item.toUser?.name || item.toUserId).substring(0,2).toUpperCase()} style={styles.avatar} />
               </View>
               <View style={[styles.statusBadge, item.status === 'COMPLETED' ? styles.statusCompleted : styles.statusPending]}>
                 <Text style={[styles.statusText, item.status === 'COMPLETED' ? styles.statusTextCompleted : styles.statusTextPending]}>
@@ -161,63 +297,122 @@ export const SettlementsScreen = () => {
               </View>
             </View>
 
-            <View style={styles.historyFooter}>
+            <View style={styles.historyDetails}>
+              <Text style={styles.historyNames}>{item.fromUser?.name || 'Member'} paid {item.toUser?.name || 'Member'}</Text>
               <Text style={styles.historyAmount}>{item.currency ?? '₹'} {Number(item.amount).toFixed(2)}</Text>
-              {item.status !== 'COMPLETED' && (
-                <Button 
-                  mode="text" 
-                  compact 
-                  onPress={() => updateStatus({ id: item.id, status: 'COMPLETED' })}
-                  labelStyle={styles.markCompleteText}
-                >
-                  Mark completed
-                </Button>
-              )}
             </View>
+
+            {item.status !== 'COMPLETED' && (
+              <Button 
+                mode="contained-tonal" 
+                compact 
+                onPress={() => updateStatus({ id: item.id, status: 'COMPLETED' })}
+                labelStyle={styles.markCompleteText}
+                style={styles.markButton}
+              >
+                Mark completed
+              </Button>
+            )}
           </Card.Content>
         </Card>
       ))}
       
       {settlements.length === 0 && (
-        <Text style={styles.emptyText}>No settlements recorded yet.</Text>
+        <Card style={styles.emptyCard} mode="outlined">
+          <Card.Content>
+            <Text style={styles.emptyTitle}>No settlements yet</Text>
+            <Text style={styles.emptyText}>Create one above to keep your group balanced and in sync.</Text>
+          </Card.Content>
+        </Card>
       )}
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  header: { marginBottom: 20 },
-  title: { color: COLORS.text, fontWeight: 'bold' },
-  subtitle: { color: COLORS.muted, marginTop: 4 },
+  heroCard: {
+    backgroundColor: '#111827',
+    borderRadius: 0,
+    marginBottom: 20,
+    overflow: 'hidden',
+    marginHorizontal: -20,
+  },
+  heroGlowTop: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: '#22c55e',
+    opacity: 0.18,
+    top: -80,
+    right: -40,
+  },
+  heroGlowBottom: {
+    position: 'absolute',
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: '#38bdf8',
+    opacity: 0.16,
+    bottom: -140,
+    left: -60,
+  },
+  heroHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  heroTitle: { color: '#ffffff', fontWeight: '700' },
+  heroSubtitle: { color: '#cbd5f5', marginTop: 4 },
+  heroBadge: { backgroundColor: '#1f2937', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
+  heroBadgeText: { color: '#93c5fd', fontSize: 12, fontWeight: '700' },
+  heroAmountRow: { marginTop: 8 },
+  heroAmountLabel: { color: '#94a3b8', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 },
+  heroAmountValue: { color: '#ffffff', fontSize: 28, fontWeight: '700', marginTop: 4 },
+  statRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  statPill: { backgroundColor: '#111f2b', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, flex: 1 },
+  statValue: { color: '#ffffff', fontSize: 16, fontWeight: '700' },
+  statLabel: { color: '#94a3b8', fontSize: 11, marginTop: 2 },
 
   formCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: 0,
     marginBottom: 24,
+    marginHorizontal: -20,
   },
   label: { marginTop: 8, marginBottom: 8, color: COLORS.text, fontWeight: '600', fontSize: 13 },
+  sectionHeader: { marginBottom: 12 },
+  sectionTitle: { fontWeight: '700', color: COLORS.text },
+  sectionSubtitle: { color: COLORS.muted, marginTop: 4 },
   
-  chipScroll: { flexDirection: 'row', marginBottom: 8 },
-  chip: { marginRight: 8, backgroundColor: '#f1f3f5', borderRadius: 20 },
-  chipSelected: { backgroundColor: COLORS.primary },
-  chipText: { color: COLORS.text },
-  chipTextSelected: { color: '#ffffff', fontWeight: 'bold' },
-  
-  row: { gap: 16, marginTop: 8 },
-  halfWidth: { width: '100%' }, // Depending on preference, this could be flexDirection row if you want them side by side
+  selectWrap: { marginBottom: 12 },
+  selectInput: { backgroundColor: '#ffffff' },
+  inlineList: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
+    marginTop: 6,
+    maxHeight: 220
+  },
+  inlineScroll: { paddingVertical: 4 },
+  inlineOption: { alignSelf: 'stretch' },
+  inlineOptionContent: { justifyContent: 'flex-start' },
+  inlineOptionText: { color: COLORS.text, textAlign: 'left' },
+  inlineEmpty: { color: COLORS.muted, textAlign: 'center', paddingVertical: 12 },
+
+  swapRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  swapHint: { color: COLORS.muted, fontSize: 12 },
+  swapButton: { margin: 0, backgroundColor: COLORS.primary + '1A' },
 
   input: { marginVertical: 16, backgroundColor: '#ffffff' },
+  presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  presetChip: { backgroundColor: '#eef2ff', borderRadius: 999 },
+  presetText: { color: '#3730a3', fontWeight: '600' },
   
   actions: { flexDirection: 'column', gap: 12 },
-  actionButton: { borderRadius: 8, paddingVertical: 4 },
-
-  sectionTitle: { fontWeight: '600', color: COLORS.text, marginBottom: 12 },
+  actionButton: { borderRadius: 10, paddingVertical: 6 },
   
-  historyCard: { marginBottom: 12, backgroundColor: '#f8f9fa', borderRadius: 12 },
-  historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  usersRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  historyCard: { marginBottom: 12, backgroundColor: '#f8fafc', borderRadius: 0, marginHorizontal: -20 },
+  historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  usersRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   avatar: { backgroundColor: COLORS.primary + '33' },
-  arrowIcon: { backgroundColor: 'transparent' },
+  flowLine: { width: 22, height: 2, backgroundColor: COLORS.primary + '55', borderRadius: 999 },
   
   statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   statusPending: { backgroundColor: '#fff3cd' },
@@ -226,9 +421,13 @@ const styles = StyleSheet.create({
   statusTextPending: { color: '#856404' },
   statusTextCompleted: { color: '#0f5132' },
   
-  historyFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  historyDetails: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  historyNames: { color: COLORS.muted, fontSize: 12 },
   historyAmount: { fontSize: 18, fontWeight: 'bold', color: COLORS.text },
   markCompleteText: { color: COLORS.primary, fontWeight: '600' },
+  markButton: { alignSelf: 'flex-start', marginTop: 10 },
 
-  emptyText: { textAlign: 'center', color: COLORS.muted, marginTop: 20 },
+  emptyCard: { borderRadius: 0, borderColor: '#e2e8f0', backgroundColor: '#ffffff', marginHorizontal: -20 },
+  emptyTitle: { fontWeight: '700', color: COLORS.text, marginBottom: 6 },
+  emptyText: { color: COLORS.muted },
 });

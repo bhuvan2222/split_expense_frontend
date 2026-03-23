@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button, Text, TextInput, SegmentedButtons } from 'react-native-paper';
+import { Button, Card, Text, TextInput, SegmentedButtons } from 'react-native-paper';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Screen } from '../../components/common/Screen';
 import { useListGroupsQuery } from '../../api/groupsApi';
@@ -8,6 +8,7 @@ import { useParseBillMutation, useParseBlinkitMutation, useParseSwiggyMutation, 
 import { useImportBillMutation } from '../../api/expensesApi';
 import { useOcrScanReceiptMutation } from '../../api/ocrApi';
 import { COLORS } from '../../constants/colors';
+import { HeroHeader } from '../../components/common/HeroHeader';
 
 export const ImportBillScreen = () => {
   const navigation = useNavigation<any>();
@@ -63,79 +64,86 @@ export const ImportBillScreen = () => {
 
   return (
     <Screen scroll>
-      <Text variant="headlineSmall" style={styles.title}>Import bill</Text>
+      <HeroHeader title="Import bill" subtitle="Scan, parse, and create expenses in seconds" icon="file-upload" />
 
-      <Text style={styles.label}>Group</Text>
-      <View style={styles.choiceRow}>
-        {groups.map((group) => (
-          <Button
-            key={group.id}
-            mode={group.id === groupId ? 'contained' : 'outlined'}
-            onPress={() => setGroupId(group.id)}
-            style={styles.choiceButton}
-          >
-            {group.name}
+      <Card style={styles.formCard} mode="contained">
+        <Card.Content>
+          <Text style={styles.label}>Group</Text>
+          <View style={styles.choiceRow}>
+            {groups.map((group) => (
+              <Button
+                key={group.id}
+                mode={group.id === groupId ? 'contained' : 'outlined'}
+                onPress={() => setGroupId(group.id)}
+                style={styles.choiceButton}
+              >
+                {group.name}
+              </Button>
+            ))}
+          </View>
+
+          <Text style={styles.label}>Source</Text>
+          <SegmentedButtons
+            value={source}
+            onValueChange={setSource}
+            buttons={[
+              { value: 'MANUAL', label: 'Manual' },
+              { value: 'SWIGGY', label: 'Swiggy' },
+              { value: 'ZOMATO', label: 'Zomato' },
+              { value: 'BLINKIT', label: 'Blinkit' }
+            ]}
+            style={styles.segmented}
+          />
+
+          <TextInput
+            mode="outlined"
+            label="Receipt image URL"
+            value={imageUrl}
+            onChangeText={setImageUrl}
+            style={styles.input}
+          />
+          <Button mode="outlined" onPress={handleScan} loading={scanning} disabled={!imageUrl}>
+            Scan via OCR
           </Button>
-        ))}
-      </View>
 
-      <Text style={styles.label}>Source</Text>
-      <SegmentedButtons
-        value={source}
-        onValueChange={setSource}
-        buttons={[
-          { value: 'MANUAL', label: 'Manual' },
-          { value: 'SWIGGY', label: 'Swiggy' },
-          { value: 'ZOMATO', label: 'Zomato' },
-          { value: 'BLINKIT', label: 'Blinkit' }
-        ]}
-      />
+          <TextInput
+            mode="outlined"
+            label="Paste bill text"
+            multiline
+            value={text}
+            onChangeText={setText}
+            style={styles.input}
+          />
 
-      <TextInput
-        mode="outlined"
-        label="Receipt image URL"
-        value={imageUrl}
-        onChangeText={setImageUrl}
-        style={styles.input}
-      />
-      <Button mode="outlined" onPress={handleScan} loading={scanning} disabled={!imageUrl}>
-        Scan via OCR
-      </Button>
+          <Button mode="outlined" onPress={handleParse} loading={parsing}>
+            Parse bill
+          </Button>
 
-      <TextInput
-        mode="outlined"
-        label="Paste bill text"
-        multiline
-        value={text}
-        onChangeText={setText}
-        style={styles.input}
-      />
+          {parsed ? (
+            <View style={styles.preview}>
+              <Text style={styles.previewText}>Merchant: {parsed.merchant ?? 'Unknown'}</Text>
+              <Text style={styles.previewText}>Total: {parsed.currency} {parsed.total}</Text>
+              <Text style={styles.previewText}>Items: {parsed.items?.length ?? 0}</Text>
+            </View>
+          ) : null}
 
-      <Button mode="outlined" onPress={handleParse} loading={parsing}>
-        Parse bill
-      </Button>
-
-      {parsed ? (
-        <View style={styles.preview}>
-          <Text style={styles.previewText}>Merchant: {parsed.merchant ?? 'Unknown'}</Text>
-          <Text style={styles.previewText}>Total: {parsed.currency} {parsed.total}</Text>
-          <Text style={styles.previewText}>Items: {parsed.items?.length ?? 0}</Text>
-        </View>
-      ) : null}
-
-      <Button mode="contained" onPress={handleImport} loading={importing} disabled={!groupId}>
-        Create expense
-      </Button>
+          <Button mode="contained" onPress={handleImport} loading={importing} disabled={!groupId} style={styles.primaryButton}>
+            Create expense
+          </Button>
+        </Card.Content>
+      </Card>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  title: { color: COLORS.primary, marginBottom: 12 },
-  label: { marginTop: 12, marginBottom: 6, color: COLORS.text },
-  input: { marginVertical: 12 },
+  formCard: { borderRadius: 0, backgroundColor: '#ffffff', marginHorizontal: -20 },
+  label: { marginTop: 12, marginBottom: 6, color: COLORS.text, fontWeight: '600' },
+  segmented: { marginBottom: 12 },
+  input: { marginVertical: 12, backgroundColor: '#ffffff' },
   choiceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  choiceButton: { marginBottom: 6 },
-  preview: { marginVertical: 12, padding: 12, borderRadius: 12, backgroundColor: '#ffffff' },
-  previewText: { color: COLORS.text }
+  choiceButton: { marginBottom: 6, borderRadius: 10 },
+  preview: { marginVertical: 12, padding: 12, borderRadius: 0, backgroundColor: COLORS.primary + '08' },
+  previewText: { color: COLORS.text },
+  primaryButton: { marginTop: 8 }
 });

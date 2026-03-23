@@ -1,11 +1,13 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button, List, Text, Card } from 'react-native-paper';
+import { Button, List, Card } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../../components/common/Screen';
 import { COLORS } from '../../constants/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { useLogoutMutation } from '../../api/authApi';
+import { HeroHeader } from '../../components/common/HeroHeader';
+import { SectionHeader } from '../../components/common/SectionHeader';
 
 export const SettingsScreen = () => {
   const navigation = useNavigation<any>();
@@ -14,10 +16,8 @@ export const SettingsScreen = () => {
 
   return (
     <Screen scroll>
-      <View style={styles.header}>
-        <Text variant="headlineMedium" style={styles.title}>Settings</Text>
-        <Text variant="bodyMedium" style={styles.subtitle}>Preferences & Account</Text>
-      </View>
+      <HeroHeader title="Settings" subtitle="Preferences and account controls" icon="cog" />
+      <SectionHeader title="Account" subtitle="Manage profile and preferences" />
 
       <Card style={styles.menuCard} mode="elevated" elevation={1}>
         <List.Section style={styles.listSection}>
@@ -77,14 +77,11 @@ export const SettingsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  header: { marginBottom: 24 },
-  title: { color: COLORS.text, fontWeight: 'bold' },
-  subtitle: { color: COLORS.muted, marginTop: 4 },
-  
   menuCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: 0,
     overflow: 'hidden',
+    marginHorizontal: -20,
   },
   listSection: { margin: 0, padding: 0 },
   itemTitle: { fontWeight: '500', color: COLORS.text },

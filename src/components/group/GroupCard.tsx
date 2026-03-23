@@ -52,7 +52,10 @@ const styles = StyleSheet.create({
   card: { 
     marginBottom: 12, 
     backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: 0,
+    marginHorizontal: -20,
+    width: '100%',
+    alignSelf: 'stretch',
   },
   cardContent: {
     flexDirection: 'row',
